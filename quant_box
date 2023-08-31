@@ -1,0 +1,16 @@
+import pandas as pd
+import yfinance as yf
+
+def backtest_return(pct_growth):
+    return (1 + pct_growth).cumprod() -1
+
+def sharpe_ratio(returns, risk_free_rate=0):
+    mean_returns = returns.mean()
+    std_returns = returns.std()
+    return ((mean_returns - risk_free_rate) / std_returns) * 252**.5
+
+
+prices = yf.download("SPY", start="2015-01-01", end="2023-01-01")
+
+print(backtest_return(prices['Adj Close'].pct_change().dropna()))
+print(sharpe_ratio(prices['Adj Close'].pct_change().dropna()))
