@@ -1,16 +1,33 @@
 import pandas as pd
 import yfinance as yf
+from scipy.stats import skew, kurtosis
+import scipy.stats as stats
+
 
 def backtest_return(pct_growth):
     return (1 + pct_growth).cumprod() -1
 
-def sharpe_ratio(returns, risk_free_rate=0):
+
+def sharpe_ratio_annual(returns, risk_free_rate=0):
     mean_returns = returns.mean()
     std_returns = returns.std()
     return ((mean_returns - risk_free_rate) / std_returns) * 252**.5
 
+def sharpe_ratio(returns, risk_free_rate=0):
+    mean_returns = returns.mean()
+    std_returns = returns.std()
+    return ((mean_returns - risk_free_rate) / std_returns) 
 
-prices = yf.download("SPY", start="2015-01-01", end="2023-01-01")
+def prob_sharp_ratio(returns, sr):
+    skewness = skew(returns)
+    kert = kurtosis(returns)
+    return stats.norm.cdf((sr*((len(returns)-1)**.5) / (1+.5*sr**2 - skewness*sr+ .25*(kert-3)* sr**2)**.5))
+
+
+
+
+prices = yf.download("SPY", start="2021-01-01", end="2022-01-01")
 
 print(backtest_return(prices['Adj Close'].pct_change().dropna()))
-print(sharpe_ratio(prices['Adj Close'].pct_change().dropna()))
+sr = sharpe_ratio(prices['Adj Close'].pct_change().dropna())
+print(prob_sharp_ratio(prices['Adj Close'].pct_change().dropna(), sr))
