@@ -1,5 +1,6 @@
 import pandas as pd
 import yfinance as yf
+import numpy as np
 from scipy.stats import skew, kurtosis
 import scipy.stats as stats
 
@@ -19,15 +20,31 @@ def sharpe_ratio(returns, risk_free_rate=0):
     return ((mean_returns - risk_free_rate) / std_returns) 
 
 def prob_sharp_ratio(returns, sr):
+    """
+    returns the confidence of a sharpe ratio (https://deliverypdf.ssrn.com/delivery.php?ID=095121121119088095084100064092071078040064035059032043111084086103027019067090096119120010051124040104010080107112121121080011038022029046084099121030106065014094028020094066086067008085092101098122091100068029065071091100030115079080005080070114093&EXT=pdf&INDEX=TRUE)
+    """
     skewness = skew(returns)
     kert = kurtosis(returns)
     return stats.norm.cdf((sr*((len(returns)-1)**.5) / (1+.5*sr**2 - skewness*sr+ .25*(kert-3)* sr**2)**.5))
 
 
+def option_payout(K,ST,option_type='call', position='long'):
+    """
+    determins the option payout of a call, or put option as well as if the position is long or short
+    K: strike price (float)
+    ST: stock price at time T (float)
+    option type: can be a call or put option (string)
+    position: can be a long or short position (string)
+    """
+    if option_type == 'call':
+        if position == 'long':
+            return max(ST-K,0)
+        else:
+            return min(K-ST,0)
+    else:
+        if position == 'long':
+            return max(K-ST,0)
+        else:
+            return min((ST-K),0)
+        
 
-
-prices = yf.download("SPY", start="2021-01-01", end="2022-01-01")
-
-print(backtest_return(prices['Adj Close'].pct_change().dropna()))
-sr = sharpe_ratio(prices['Adj Close'].pct_change().dropna())
-print(prob_sharp_ratio(prices['Adj Close'].pct_change().dropna(), sr))
